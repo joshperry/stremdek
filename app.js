@@ -58,7 +58,7 @@ const App = () => {
       </ToggleButton>
 
       <ToggleButton state={state.scene === 'game'} row="2" name="recording" command="SetCurrentScene" params={{'scene-name': 'game'}} request={state.request}>
-        Game
+        <img height="50px" src="https://cdn4.iconfinder.com/data/icons/SUNNYDAY/graphics/png/400/scene.png"/> Game
       </ToggleButton>
       <ToggleButton state={state.scene === 'Full Vid'} row="2" name="recording" command="SetCurrentScene" params={{'scene-name': 'Full Vid'}} request={state.request}>
         Full Vid
