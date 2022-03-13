@@ -1,44 +1,133 @@
 // Import react funcs
-const {useState} = React
+const {useState, useEffect} = React
 
 // Root application code
-const app = async () => {
+const App = () => {
+  // Map OBS events to state transitions
+  const [state, setState] = useState({
+    connected: false,
+    events: null,
+    requests: null,
+
+    recording: false,
+    scene: ''
+  })
+
   // Connect to the OBS websocket plugin over the network
-  const {events, request} = await connect('ws://bones.local:4444')
+  useEffect(async () => {
+    console.log('connecting')
+    const {events, request} = await connect('ws://bones.local:4444')
+    console.log('completed connection')
+    setState(state => ({
+      ...state,
+      connected: true,
+      events,
+      request
+    }))
+
+    events(msg => {
+      switch(msg.updateType) {
+        case 'RecordingStarted':
+          setState(state => ({ ...state, recording: true }))
+          break;
+        case 'RecordingStopped':
+          setState(state => ({ ...state, recording: false }))
+          break;
+        case 'TransitionEnd':
+          setState(state => ({ ...state, scene: msg['to-scene'] }))
+          break;
+      }
+    })
+  }, [])
+
+  if(!state.connected) {
+    return (
+        <h3>
+          Connecting...
+        </h3>
+    )
+  }
 
   // Send our button set out for react to render
   return (
-    <StateButton width="4" command="StartStopRecording" events={events} request={request}>
-      <state update-type="RecordingStarted" class="recording">⚠️Recording in Progress</state>
-      <state update-type="RecordingStopped" class="idle">OFFLINE</state>
-    </StateButton>
+    <React.StrictMode>
+      <div id="container">
+      <ToggleButton state={state.recording} row="1" column="1/5" name="recording" command="StartStopRecording" request={state.request}>
+        <span className="oncontent">⚠️Recording in Progress</span>
+        <span className="offcontent">Not Recording</span>
+      </ToggleButton>
+
+      <ToggleButton state={state.scene === 'game'} row="2" name="recording" command="SetCurrentScene" params={{'scene-name': 'game'}} request={state.request}>
+        Game
+      </ToggleButton>
+      <ToggleButton state={state.scene === 'Full Vid'} row="2" name="recording" command="SetCurrentScene" params={{'scene-name': 'Full Vid'}} request={state.request}>
+        Full Vid
+      </ToggleButton>
+
+      <ToggleButton state={state.recording} row="2" name="recording" on="RecordingStarted" off="RecordingStopped" events={state.events}>
+        <span className="oncontent">⚠️Recording in Progress</span>
+        <span className="offcontent">OFFLINE</span>
+      </ToggleButton>
+      <ToggleButton state={state.recording} row="2" name="recording" on="RecordingStarted" off="RecordingStopped" events={state.events}>
+        <span className="oncontent">⚠️Recording in Progress</span>
+        <span className="offcontent">OFFLINE</span>
+      </ToggleButton>
+
+      <CommandButton row="3" column="1/3" name="recording" command="SaveReplayBuffer" request={state.request}>
+        CLIP IT, Chat!
+      </CommandButton>
+      <ToggleButton state={state.recording} row="3" name="recording" on="RecordingStarted" off="RecordingStopped" events={state.events}>
+        <span className="oncontent">⚠️Recording in Progress</span>
+        <span className="offcontent">OFFLINE</span>
+      </ToggleButton>
+      <ToggleButton state={state.recording} row="3" name="recording" on="RecordingStarted" off="RecordingStopped" events={state.events}>
+        <span className="oncontent">⚠️Recording in Progress</span>
+        <span className="offcontent">OFFLINE</span>
+      </ToggleButton>
+
+      <ToggleButton state={state.recording} row="4" name="recording" on="RecordingStarted" off="RecordingStopped" events={state.events}>
+        <span className="oncontent">⚠️Recording in Progress</span>
+        <span className="offcontent">OFFLINE</span>
+      </ToggleButton>
+      <ToggleButton state={state.recording} row="4" column="2/5" name="recording" on="RecordingStarted" off="RecordingStopped" events={state.events}>
+        <span className="oncontent">⚠️Recording in Progress</span>
+        <span className="offcontent">OFFLINE</span>
+      </ToggleButton>
+    </div>
+    </React.StrictMode>
   )
 }
 
-const StateButton = (props) => { 
-  const [state, setState] = useState({
-    recording: false,
-    className: 'toggle-button idle'
-  })
-
-  props.events(msg => {
-    // mutate state based on messages
-    if(msg.updateType === 'RecordingStarted' || msg.updateType === 'RecordingStopped') {
-      setState((prev) => ({
-        ...prev,
-        recording: msg.updateType === 'RecordingStarted',
-        className: msg.updateType === 'RecordingStarted' ? 'toggle-button recording' : 'toggle-button idle'
-      }))
+const ToggleButton = (props) => { 
+  const toggle = async () => {
+    if(props.command) {
+      try {
+        await props.request(props.command, props.params)
+      } catch(err) {
+        console.log(`error sending command: ${err}`)
+      }
     }
-  })
-
-  const toggle = () => {
-    props.request(props.command)
   }
 
   return (
-  <button className={state.className} role="button" onClick={toggle}>
-    { state.recording ? '⚠️Recording in Progress' : 'OFFLINE'  }
+  <button className={`toggle-button ${props.name} ${props.state?'on':'off'}`} style={{gridColumn: props.column, gridRow: props.row}} role="button" onClick={toggle}>
+    {props.children}
+  </button>
+  )
+}
+
+const CommandButton = (props) => { 
+  const send = async () => {
+    try {
+      await props.request(props.command, props.params)
+    } catch(err) {
+      console.log(`error sending command: ${err}`)
+    }
+  }
+
+  return (
+  <button className={`command-button ${props.name}`} style={{gridColumn: props.column, gridRow: props.row}} role="button" onClick={send}>
+    {props.children}
   </button>
   )
 }
@@ -51,6 +140,7 @@ const guid = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
 
 const connect = host => {
   return new Promise((resolve, reject) => {
+    console.log('in connect')
     let listeners = []
     let completions = {}
 
@@ -125,7 +215,6 @@ const connect = host => {
 }
 
 // Mount the application into the DOM
-(async function() {
-  const domContainer = document.querySelector('#mount');
-  ReactDOM.render(await app(), domContainer);
-}())
+const domContainer = document.querySelector('#mount');
+ReactDOM.render((<App/>), domContainer);
+twemoji.parse(document.body);

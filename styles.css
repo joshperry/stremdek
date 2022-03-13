@@ -1,12 +1,40 @@
 body {
-	background-color: black;
+	margin: 10px;
+	padding: 0;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+img.emoji {
+	height: 1.0em;
+	width: 1.0em;
+	margin: 0 .05em 0 .1em;
+	vertical-align: -0.1em;
+}
+
+#container {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 10px;
+	grid-auto-rows: minmax(100px, auto);
+	align-items: stretch;
+	align-content: start;
 }
 
 .toggle-button {
-	width: 100%
 }
 
-.recording {
+.recording.off span.oncontent {
+	display: none;
+}
+
+.recording.on span.offcontent {
+	display: none;
+}
+
+.recording.on {
   align-items: center;
   appearance: none;
   background-image: radial-gradient(100% 100% at 100% 0, #dddaff 0, #dd68ff 100%);
@@ -16,16 +44,13 @@ body {
   box-sizing: border-box;
   color: #fff;
   cursor: pointer;
-  display: inline-flex;
   font-family: "JetBrains Mono",monospace;
-  height: 48px;
   justify-content: center;
   line-height: 1;
   list-style: none;
   overflow: hidden;
   padding-left: 16px;
   padding-right: 16px;
-  position: relative;
   text-align: left;
   text-decoration: none;
   transition: box-shadow .15s,transform .15s;
@@ -37,16 +62,16 @@ body {
   font-size: 18px;
 }
 
-.recording:focus {
+.recording.on:focus {
   box-shadow: #dd4fe0 0 0 0 1.5px inset, rgba(200, 35, 66, .4) 0 2px 4px, rgba(200, 35, 66, .3) 0 7px 13px -3px, #dd4fe0 0 -3px 0 inset;
 }
 
-.recording:active {
+.recording.on:active {
   box-shadow: #dd4fe0 0 3px 7px inset;
   transform: translateY(2px);
 }
 
-.idle {
+.command-button, .recording.off {
   align-items: center;
   appearance: none;
   background-image: radial-gradient(100% 100% at 100% 0, #5adaff 0, #5468ff 100%);
@@ -56,16 +81,13 @@ body {
   box-sizing: border-box;
   color: #fff;
   cursor: pointer;
-  display: inline-flex;
   font-family: "JetBrains Mono",monospace;
-  height: 48px;
   justify-content: center;
   line-height: 1;
   list-style: none;
   overflow: hidden;
   padding-left: 16px;
   padding-right: 16px;
-  position: relative;
   text-align: left;
   text-decoration: none;
   transition: box-shadow .15s,transform .15s;
@@ -77,11 +99,11 @@ body {
   font-size: 18px;
 }
 
-.idle:focus {
+.command-button:focus, .recording.off:focus {
   box-shadow: #3c4fe0 0 0 0 1.5px inset, rgba(45, 35, 66, .4) 0 2px 4px, rgba(45, 35, 66, .3) 0 7px 13px -3px, #3c4fe0 0 -3px 0 inset;
 }
 
-.idle:active {
+.command-button:active, .recording.off:active {
   box-shadow: #3c4fe0 0 3px 7px inset;
   transform: translateY(2px);
 }
